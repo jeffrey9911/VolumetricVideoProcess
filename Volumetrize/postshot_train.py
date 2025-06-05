@@ -1,28 +1,123 @@
 import subprocess
 import argparse
 import yaml
+import sys
+import time
 from pathlib import Path
+
+def run_command_adv(cmd, working_dir=None):
+    print(f"Running: {' '.join(cmd)}")
+    print("=" * 60)
+    
+    # Use Popen for real-time output with both stdout and stderr
+    process = subprocess.Popen(
+        cmd, 
+        cwd=working_dir, 
+        stdout=subprocess.PIPE, 
+        stderr=subprocess.PIPE,
+        text=True,
+        bufsize=1,
+        universal_newlines=True
+    )
+    
+    stdout_lines = []
+    stderr_lines = []
+    
+    # Read output in real-time
+    while True:
+        # Check if process is still running
+        if process.poll() is not None:
+            break
+            
+        # Read from stdout
+        if process.stdout:
+            stdout_line = process.stdout.readline()
+            if stdout_line:
+                print(f"OUT: {stdout_line.strip()}")
+                stdout_lines.append(stdout_line.strip())
+                sys.stdout.flush()  # Force output to appear immediately
+        
+        # Read from stderr  
+        if process.stderr:
+            stderr_line = process.stderr.readline()
+            if stderr_line:
+                print(f"ERR: {stderr_line.strip()}")
+                stderr_lines.append(stderr_line.strip())
+                sys.stdout.flush()
+                
+        time.sleep(0.01)  # Small delay to prevent excessive CPU usage
+    
+    # Get any remaining output
+    remaining_stdout, remaining_stderr = process.communicate()
+    if remaining_stdout:
+        for line in remaining_stdout.strip().split('\n'):
+            if line:
+                print(f"OUT: {line}")
+                stdout_lines.append(line)
+    if remaining_stderr:
+        for line in remaining_stderr.strip().split('\n'):
+            if line:
+                print(f"ERR: {line}")
+                stderr_lines.append(line)
+    
+    return_code = process.returncode
+    print("=" * 60)
+    
+    if return_code != 0:
+        print(f"Error: Command failed with return code {return_code}")
+        raise RuntimeError(f"Command failed with return code {return_code}")
+    
+    print("Command completed successfully")
+    
+    # Create result object
+    class Result:
+        def __init__(self, returncode, stdout_lines, stderr_lines):
+            self.returncode = returncode
+            self.stdout = '\n'.join(stdout_lines)
+            self.stderr = '\n'.join(stderr_lines)
+    
+    return Result(return_code, stdout_lines, stderr_lines)
 
 def run_command(cmd, working_dir=None):
     print(f"Running: {' '.join(cmd)}")
-    result = subprocess.run(cmd, cwd=working_dir, capture_output=True, text=True)
+#    result = subprocess.run(cmd, cwd=working_dir, capture_output=True, text=True)
+    process = subprocess.Popen(
+        cmd, 
+        cwd=working_dir, 
+        stdout=subprocess.PIPE, 
+        stderr=subprocess.STDOUT,
+        text=True, 
+        shell=False,
+        bufsize=1,
+        universal_newlines=True
+    )
+
+    stdout_lines = []
+    while True:
+        output = process.stdout.readline()
+        if output == '' and process.poll() is not None:
+            break
+        if output:
+            print(output.strip())
+            stdout_lines.append(output.strip())
     
-    if result.returncode != 0:
-        print(f"Error running command: {' '.join(cmd)}")
-        print(f"stdout: {result.stdout}")
-        print(f"stderr: {result.stderr}")
-        raise RuntimeError(f"COLMAP command failed with return code {result.returncode}")
+    return_code = process.poll()
+
+    if return_code != 0:
+        print(f"Error: Command failed with return code {return_code}")
+        raise RuntimeError(f"Command failed with return code {return_code}")
+    
     
     print("Command completed successfully")
-    return result
+    return return_code
 
 def train_frame(frame_path, output_path, postshot_cli_path, config):
     print(f"\n=== Processing frame: {frame_path.name} ===")
     
     postshot_train_cmd = [
-        f"\"{postshot_cli_path}\postshot_cli.exe\"",
+        str(postshot_cli_path / "postshot-cli.exe"),
         "train",
-        "-i", f"\"{frame_path}\"",
+        "-i", f"{frame_path}",
         "-p", config['profile']
     ]
 
@@ -32,10 +127,11 @@ def train_frame(frame_path, output_path, postshot_cli_path, config):
     postshot_train_cmd.extend([
         "-s", str(config['iterations']),
         "--anti-aliasing", str(config['antiAliasing']),
-        "--export-splat-ply", f"\"{output_path / frame_path.name}.ply\"",
+        "--export-splat-ply", str(output_path / f"{frame_path.name}.ply")
     ])
 
-    run_command(postshot_train_cmd)
+    #run_command(postshot_train_cmd, str(Path.home))
+    run_command(postshot_train_cmd, str(frame_path.parent))
 
 
 def main():
@@ -86,12 +182,14 @@ def main():
 
     print(f"Profile: {config['profile']}, Iterations: {config['iterations']}, Max Splats: {config['maxNumSplats']}, Anti-Aliasing: {config['antiAliasing']}")
 
-    for frame_folder in frame_folders:
-        try:
-            train_frame(frame_folder, output_path, postshot_cli_path, config)
-        except Exception as e:
-            print(f"Error processing frame {frame_folder.name}: {e}")
-            continue
+    train_frame(frame_folders[0], output_path, postshot_cli_path, config)
+
+#    for frame_folder in frame_folders:
+#        try:
+#            train_frame(frame_folder, output_path, postshot_cli_path, config)
+#        except Exception as e:
+#            print(f"Error processing frame {frame_folder.name}: {e}")
+#            continue
 
     print("\n=== All frames processed successfully! ===")
 
