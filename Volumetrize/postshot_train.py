@@ -139,6 +139,9 @@ def main():
     parser.add_argument("project_path", help="Path to the project folder containing all frames")
     parser.add_argument("-o", help="Path to output frames")
     parser.add_argument("--postshot_cli", default="C:\\Program Files\\Jawset Postshot\\bin", help="Path to postshot_cli.exe")
+    parser.add_argument("--start_from", default=0, help="Index of the frame to start from (defult:0)")
+    parser.add_argument("--count", default=0, help="Number of frames to process (default: 0, meaning all frames)")
+    parser.add_argument("--reverse", action='store_true', help="Process frames in reverse order")
     
     
     args = parser.parse_args()
@@ -147,6 +150,10 @@ def main():
     output_path = Path(args.o)
     postshot_cli_path = Path(args.postshot_cli)
     config_path = project_path / "_config.yaml"
+
+    start_index = int(args.start_from)
+    count = int(args.count)
+    reverse = args.reverse
     
     if not project_path.exists():
         raise RuntimeError(f"Project path does not exist: {project_path}")
@@ -176,20 +183,46 @@ def main():
     if not frame_folders:
         raise RuntimeError(f"No frame folders found in {project_path}")
     
-    print(f"Found {len(frame_folders)} frame folders:")
-    for frame in frame_folders:
-        print(f"  - {frame.name}")
+#    print(f"Found {len(frame_folders)} frame folders:")
+#    for frame in frame_folders:
+#        print(f"  - {frame.name}")
 
-    print(f"Profile: {config['profile']}, Iterations: {config['iterations']}, Max Splats: {config['maxNumSplats']}, Anti-Aliasing: {config['antiAliasing']}")
-
-    train_frame(frame_folders[0], output_path, postshot_cli_path, config)
-
+#    train_frame(frame_folders[0], output_path, postshot_cli_path, config)
 #    for frame_folder in frame_folders:
 #        try:
 #            train_frame(frame_folder, output_path, postshot_cli_path, config)
 #        except Exception as e:
 #            print(f"Error processing frame {frame_folder.name}: {e}")
 #            continue
+
+    print("\n\n=== Starting batch processing of frames ===")
+    print(f"Total frames: {len(frame_folders)}")
+    print(f"Processing frames from index {start_index} with count {count} in {'reverse' if reverse else 'normal'} order")
+    print(f"Splat profile: {config['profile']}")
+    print(f"Iterations: {config['iterations']}")
+    print(f"Max Splats: {config['maxNumSplats']}")
+    print(f"Anti-Aliasing: {config['antiAliasing']}\n\n")
+
+    # wait for any key press before starting
+    input("Press Enter to start processing frames...")
+
+    if count <= 0:
+        count = len(frame_folders)
+        print(f"Defult count to {count} based on available frames.")
+
+    if reverse:
+        for i in range(start_index, start_index - count - 1, -1):
+            if i < 0 or i >= len(frame_folders):
+                print(f"Skipping invalid index {i}")
+                break
+            train_frame(frame_folders[i], output_path, postshot_cli_path, config)
+    
+    if not reverse:
+        for i in range(start_index, start_index + count):
+            if i < 0 or i >= len(frame_folders):
+                print(f"Skipping invalid index {i}")
+                break
+            train_frame(frame_folders[i], output_path, postshot_cli_path, config)
 
     print("\n=== All frames processed successfully! ===")
 
