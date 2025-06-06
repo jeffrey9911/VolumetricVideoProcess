@@ -142,6 +142,7 @@ def main():
     parser.add_argument("--start_from", default=0, help="Index of the frame to start from (defult:0)")
     parser.add_argument("--count", default=0, help="Number of frames to process (default: 0, meaning all frames)")
     parser.add_argument("--reverse", action='store_true', help="Process frames in reverse order")
+    parser.add_argument("--test", action='store_true', help="Test mode, only processes the first frame")
     
     
     args = parser.parse_args()
@@ -154,6 +155,7 @@ def main():
     start_index = int(args.start_from)
     count = int(args.count)
     reverse = args.reverse
+    test_mode = args.test
     
     if not project_path.exists():
         raise RuntimeError(f"Project path does not exist: {project_path}")
@@ -205,6 +207,15 @@ def main():
 
     # wait for any key press before starting
     input("Press Enter to start processing frames...")
+
+    if test_mode:
+        print("Test mode enabled, only processing the first frame.")
+        if frame_folders:
+            train_frame(frame_folders[0], output_path, postshot_cli_path, config)
+        else:
+            print("No frames to process in test mode.")
+        
+        return
 
     if count <= 0:
         count = len(frame_folders)
