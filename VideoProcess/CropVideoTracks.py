@@ -258,8 +258,8 @@ def get_video_info(video_path):
 
 if __name__ == "__main__":
     # Configuration
-    input_video_path = "/Users/yaojie/Desktop/output/0604-GS/1lh.mkv"  # Change this to your canvas video path
-    output_directory = "/Users/yaojie/Desktop/output/0604-GS/v"
+    input_video_path = "/Users/yaojie/Desktop/test_02/canv.mkv"  # Change this to your canvas video path
+    output_directory = "/Users/yaojie/Desktop/test_02/v"
     
     # Check if input video exists
     if not os.path.exists(input_video_path):
@@ -282,8 +282,8 @@ if __name__ == "__main__":
             output_dir=output_directory,
             track_width=720,
             track_height=1280,
-            num_tracks=20,
-            output_codec='H264'  # Options: 'H264', 'XVID', 'mp4v', 'MJPG'
+            num_tracks=9,
+            output_codec='MJPG'  # Options: 'H264', 'XVID', 'mp4v', 'MJPG'
         )
         
         if success:
