@@ -72,7 +72,7 @@ def extract_synchronized_frames(input_folder, output_folder):
     try:
         for frame_idx in range(min_frame_count):
             # Create folder for this frame
-            frame_folder = os.path.join(output_folder, f"frame_{frame_idx:05d}")
+            frame_folder = os.path.join(output_folder, f"frame_{frame_idx:05d}", "images")
             Path(frame_folder).mkdir(parents=True, exist_ok=True)
             
             # Progress reporting
