@@ -95,33 +95,39 @@ def main():
         xmp_files = list(images_path.glob("*.xmp"))
         if not xmp_files:
             print(f"No XMP files found in {images_path}, skipping subsequent frames alignment.")
-            exit(0)
+            exit(1)
 
         for xmp_file in xmp_files:
             for frame_folder in frame_folders[1:]:
                 shutil.copy2(xmp_file, frame_folder/"images")
                 print(f"Copied XMP file {xmp_file.name} to {frame_folder/'images'}")
-    
+    else:
+        print(f"Failed to align first frame {first_frame.name}. Exiting.")
+        exit(1)
 
-    print("\n=== All frames processed successfully! ===")
-    
-    
-'''  
     # Process subsequent frames
     for frame_folder in frame_folders[1:]:
-        images_path = frame_folder / "images"
-        
+        images_path = frame_folder/"images"
+        export_path = export_path_base/frame_folder.name
+        export_path.mkdir(parents=True, exist_ok=True)
+
         if not images_path.exists():
             print(f"Warning: Images folder not found in {frame_folder.name}, skipping...")
             continue
         
         try:
-            process_subsequent_frame(frame_folder, images_path, first_sparse_dir)
+            if rs_align_with_xmp(rs_exe, images_path, export_path, xml_path):
+                print(f"Frame {frame_folder.name} aligned successfully.")
+            else:
+                print(f"Failed to align frame {frame_folder.name}.")
         except Exception as e:
             print(f"Error processing frame {frame_folder.name}: {e}")
             continue
-    ''' 
     
+
+    print("\n=== All frames processed successfully! ===")
+
+    input("Press Enter to exit...")
 
 if __name__ == "__main__":
     main()
