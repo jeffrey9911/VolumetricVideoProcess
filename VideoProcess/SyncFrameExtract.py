@@ -321,8 +321,8 @@ def preview_extraction_plan(input_folder):
 # Example usage
 if __name__ == "__main__":
     # Configuration
-    input_folder = "/Users/yaojie/Desktop/test_02/synced_tracks"      # Folder containing .mp4 files
-    output_folder = "/Users/yaojie/Desktop/test_02/synced_frames" # Where frame folders will be created
+    input_folder = "/Users/yaojie/Desktop/VV-Datasets/0709-GS/resynced_V"      # Folder containing .mp4 files
+    output_folder = "/Users/yaojie/Desktop/VV-Datasets/0709-GS/resynced_F" # Where frame folders will be created
     
     # Preview what will be extracted (optional)
     print("=== PREVIEW ===")
