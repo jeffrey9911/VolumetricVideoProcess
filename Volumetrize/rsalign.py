@@ -10,7 +10,7 @@ def rs_first_align(rs_path, import_path, export_path, xml_path):
         "-addFolder", str(import_path),
         "-align",
         "-exportXMP",
-        "-exportRegistration", str(export_path), str(xml_path),
+        "-exportRegistration", f"{str(export_path)}/placeholder.txt", str(xml_path),
         "-quit"
     ]
 
@@ -30,7 +30,7 @@ def rs_align_with_xmp(rs_path, import_path, export_path, xml_path):
         rs_path, "-headless",
         "-addFolder", str(import_path),
         "-align",
-        "-exportRegistration", str(export_path), str(xml_path),
+        "-exportRegistration", f"{str(export_path)}/placeholder.txt", str(xml_path),
         "-quit"
     ]
     
@@ -51,13 +51,6 @@ def check_directories(path):
         print(f"Creating directory: {path}")
         path.mkdir(parents=True, exist_ok=True)
 
-'''
-    if cameras_src.exists():
-        shutil.copy2(cameras_src, cameras_dst)
-        print(f"Copied cameras.bin")
-    else:
-        raise RuntimeError(f"cameras.bin not found in first frame: {cameras_src}")
-'''
 
 def main():
     parser = argparse.ArgumentParser(description="COLMAP reconstruction pipeline for multi-frame data")
@@ -100,12 +93,14 @@ def main():
     if (rs_first_align(rs_exe, images_path, export_path, xml_path)):
         print(f"First frame {first_frame.name} aligned successfully.")
         xmp_files = list(images_path.glob("*.xmp"))
-        for xmp_file in xmp_files:
-            print(f"Found XMP file: {xmp_file.name}")
         if not xmp_files:
             print(f"No XMP files found in {images_path}, skipping subsequent frames alignment.")
+            exit(0)
 
-
+        for xmp_file in xmp_files:
+            for frame_folder in frame_folders[1:]:
+                shutil.copy2(xmp_file, frame_folder/"images")
+                print(f"Copied XMP file {xmp_file.name} to {frame_folder/'images'}")
     
 
     print("\n=== All frames processed successfully! ===")
