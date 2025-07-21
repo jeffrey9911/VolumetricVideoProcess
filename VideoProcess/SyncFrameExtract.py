@@ -72,7 +72,7 @@ def extract_synchronized_frames(input_folder, output_folder):
     try:
         for frame_idx in range(min_frame_count):
             # Create folder for this frame
-            frame_folder = os.path.join(output_folder, f"frame_{frame_idx:05d}", "images")
+            frame_folder = os.path.join(output_folder, f"frame_{frame_idx:05d}")
             Path(frame_folder).mkdir(parents=True, exist_ok=True)
             
             # Progress reporting
@@ -89,8 +89,12 @@ def extract_synchronized_frames(input_folder, output_folder):
                     continue
                 
                 # Save the frame
-                image_filename = f"image_{video_idx:05d}.jpg"
+                image_filename = f"{video_idx:05d}.png"  # Use PNG for saving alpha data
                 image_path = os.path.join(frame_folder, image_filename)
+
+                # change all the black pixels to transparent in the frame
+                #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)  # Convert to BGRA
+                #frame[np.all(frame[:, :, :3] == [0, 0, 0], axis=-1), 3] = 0  # Set alpha channel to 0 for black pixels
                 
                 success = cv2.imwrite(image_path, frame)
                 if not success:
@@ -322,7 +326,7 @@ def preview_extraction_plan(input_folder):
 if __name__ == "__main__":
     # Configuration
     input_folder = "/Users/yaojie/Desktop/VV-Datasets/0709-GS/resynced_V"      # Folder containing .mp4 files
-    output_folder = "/Users/yaojie/Desktop/VV-Datasets/0709-GS/resynced_F" # Where frame folders will be created
+    output_folder = "/Users/yaojie/Desktop/VV-Datasets/0718-GS/synced_F_bg" # Where frame folders will be created
     
     # Preview what will be extracted (optional)
     print("=== PREVIEW ===")
